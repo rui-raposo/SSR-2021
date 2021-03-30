@@ -1,0 +1,169 @@
+use ref.Ref
+
+use int.Int
+use int.EuclideanDivision
+use int.Power
+
+use int.Fact
+use array.Array
+use array.ArrayEq
+use array.ArraySum
+use array.IntArraySorted
+
+
+
+
+
+
+
+
+(************************************** Exercise 3 **************************************)
+
+let factorial (n0:int) : int
+    requires { n0 > 0 }
+    ensures  { result = fact n0 }
+    =
+    let r = ref 1 in
+    let n = ref n0 in
+    while (!n > 0) do
+        variant   { !n }
+        invariant { 0 <= !n <= n0 }
+        invariant { fact n0 = (fact !n) * !r }
+        r := !r * !n;
+        n := !n - 1;
+    done;
+    !r
+
+
+
+
+
+(************************************** Exercise 4 **************************************)
+
+let power_t (n0 : int) (t : int) : int
+  requires { n0 > 1 }
+  ensures  { result = power t n0 }
+  =
+  let r = ref t in
+  let n = ref n0 in
+  while ( !n > 1 ) do
+    variant   { !n }
+    invariant { power t n0 = !r * (power t (!n - 1)) /\ !n >= 1 }
+    r := !r * t;
+    n := !n - 1
+  done;
+  !r
+
+
+
+
+
+(************************************** Exercise 5 **************************************)
+
+
+
+(*
+ * 
+ * Important notes:
+ * 
+ *   - When we are drawing a specific function, we want to define
+ *   the most generic precondition; hence, our program can take all kind of
+ *   input, concerning the main function's goal.
+ *
+ *   - In the other hand, when we are calculating the poscondition, it must
+ *   be the most specific has possible! 
+ *
+ *
+ * In this particular example, we are dealing with data structures, so some aspects
+ * must be taken into account.
+ *
+ *)
+
+
+(************************************** Exercise 6 **************************************)
+
+
+(*
+ * Predicates informing if a certain value is inside an array.
+ *)
+predicate contains (value : int) (arr : array (int)) =
+exists i:int. 0 <= i < arr.length /\ arr[i] = value
+
+
+let getIndex (value : int) (arr : array (int)) : int 
+  requires { true }
+  ensures  { contains value arr /\ result <> arr.length \/ not (contains value arr) /\ result = arr.length }
+  =
+  let i = ref 0 in
+  while !i < arr.length && arr[!i] <> value do
+    variant   { arr.length - !i }
+    invariant { 0 <= !i <= arr.length }
+    invariant { forall j. 0 <= j < !i -> arr[j] <> value }
+    i := !i + 1
+  done;
+  !i
+
+
+
+
+
+(************************************** Exercise 7 **************************************)
+
+(* 
+ * Predicates informing if we are dealing with an array that only contains natural numbers
+ *)
+predicate onlyNat (arr: array (int)) = 
+forall i:int. 0 <= i < arr.length -> arr[i] >= 0
+
+
+let sumElements (arr : array (int)) : int
+  requires { onlyNat arr }
+  ensures  { result = sum arr 0 arr.length }
+  =
+  let somatorio = ref 0 in
+  let i = ref 0 in
+  while !i < arr.length do
+    variant   { arr.length - !i }
+    invariant { 0 <= !i <= arr.length }
+    invariant { !somatorio = sum arr 0 !i }
+    somatorio := !somatorio + arr[!i];
+    i := !i + 1
+  done;
+  !somatorio
+
+
+
+
+
+(************************************** Exercise 8 **************************************)
+
+(*
+ * Predicates informing if a certain value arr[index] is even.
+ *)
+predicate findEven (index : int) (arr : array (int)) = 
+mod arr[index] 2 = 0
+
+let hmEven (arr: array (int)) : int
+  requires { onlyNat arr }
+  ensures  { forall j:int. 0 <= j < arr.length /\ findEven j arr -> result > 0 \/ forall j:int. 0 <= j < arr.length /\ not (findEven j arr) -> result = 0 }
+  =
+  let somatorio = ref 0 in
+  let i = ref 0 in 
+  while !i < arr.length do 
+    variant   { arr.length - !i }
+    invariant { 0 <= !i <= arr.length }
+    invariant { 0 <= !somatorio <= !i }
+    invariant { forall j:int. 0 <= j < !i /\ findEven j arr -> !somatorio > 0 }
+    if mod arr[!i] 2 = 0 then somatorio := !somatorio + 1 
+    else somatorio := !somatorio + 0;
+    i := !i + 1
+  done;
+  !somatorio
+  
+
+
+
+
+(************************************** Exercise 9 **************************************)
+
+
